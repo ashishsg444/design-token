@@ -15,6 +15,11 @@
         "value": "#039be5",
         "type": "color",
         "description": "Tertiary brand color used for text and icons"
+      },
+      "neutral": {
+        "value": "#ab47bc",
+        "type": "color",
+        "description": "Neutral brand color used for text and icons"
       }
     },
     "background": {

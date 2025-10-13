@@ -14,44 +14,69 @@ jobs:
       - name: Checkout design tokens
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+      # - name: Setup Node
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: 20
 
-      - name: Install dependencies
-        run: npm ci
+      # - name: Install dependencies
+      #   run: npm install
 
-      - name: Generate SCSS from tokens
-        run: npm run build-tokens
+      # - name: Generate SCSS from tokens
+      #   run: npm run build-tokens
         # This should output SCSS files in ./dist or ./build directory
 
       - name: Clone Angular UI repo
         run: |
-          git clone https://x-access-token:${{ secrets.ANGULAR_UI_DEPLOY_TOKEN }}@github.com/<your-username>/angular-ui.git
-          cd angular-ui
+          git clone https://x-access-token:${{ secrets.ANGULAR_UI_DEPLOY_TOKEN }}@github.com/ashishsg444/ui.git
+          cd ui
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
 
-      - name: Copy generated SCSS into Angular repo
+      
+      - name: Copy tokens into Angular repo
         run: |
-          cd angular-ui
-          mkdir -p src/styles/tokens
-          cp -r ../dist/*.scss src/styles/tokens/
+          echo "📂 Current directory:"
+          pwd
+
+          echo "🗂 Files here:"
+          ls -R
+
+          # make sure target folder exists
+          mkdir -p ui/angular-git-int/tokens
+
+          # copy the token JSON file from current repo into the Angular project
+          cp core.json ui/angular-git-int/tokens/core.json
+
+          echo "✅ Files copied successfully!"
+
 
       - name: Commit and push changes
         run: |
-          cd angular-ui
+          cd ui/angular-git-int
+
+          # Configure Git user
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          # Create a new branch
           git checkout -b update-design-tokens-${{ github.run_id }}
+
           git add .
-          git commit -m "chore: update design tokens from design-tokens repo"
+          git commit -m "chore: update design tokens from design-tokens repo" || echo "No changes to commit"
+
+          # Update remote URL to use the deploy token
+          git remote set-url origin https://x-access-token:${{ secrets.ANGULAR_UI_DEPLOY_TOKEN }}@github.com/ashishsg444/ui.git
+
+          # Push using the token
           git push origin update-design-tokens-${{ github.run_id }}
+
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.ANGULAR_UI_DEPLOY_TOKEN }}
-          repository: <your-username>/angular-ui
+          repository: ashishsg444/ui
           branch: update-design-tokens-${{ github.run_id }}
           title: "chore: update design tokens"
           body: "This PR updates SCSS tokens generated from the design-tokens repo."
