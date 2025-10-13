@@ -1,0 +1,58 @@
+name: Update Angular UI Tokens
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '**/*.json'  # only trigger when tokens change
+
+jobs:
+  update-ui:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout design tokens
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate SCSS from tokens
+        run: npm run build-tokens
+        # This should output SCSS files in ./dist or ./build directory
+
+      - name: Clone Angular UI repo
+        run: |
+          git clone https://x-access-token:${{ secrets.ANGULAR_UI_DEPLOY_TOKEN }}@github.com/<your-username>/angular-ui.git
+          cd angular-ui
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      - name: Copy generated SCSS into Angular repo
+        run: |
+          cd angular-ui
+          mkdir -p src/styles/tokens
+          cp -r ../dist/*.scss src/styles/tokens/
+
+      - name: Commit and push changes
+        run: |
+          cd angular-ui
+          git checkout -b update-design-tokens-${{ github.run_id }}
+          git add .
+          git commit -m "chore: update design tokens from design-tokens repo"
+          git push origin update-design-tokens-${{ github.run_id }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.ANGULAR_UI_DEPLOY_TOKEN }}
+          repository: <your-username>/angular-ui
+          branch: update-design-tokens-${{ github.run_id }}
+          title: "chore: update design tokens"
+          body: "This PR updates SCSS tokens generated from the design-tokens repo."
+          base: main
