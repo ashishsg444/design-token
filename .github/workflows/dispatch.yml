@@ -1,0 +1,23 @@
+name: Dispatch Token Update
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '**/*.json'
+
+jobs:
+  notify-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send repository_dispatch to UI repo
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.ANGULAR_UI_DEPLOY_TOKEN }}   # PAT with access to Repo B
+          repository: ashishsg444/ui
+          event-type: tokens-updated
+          client-payload: |
+            {
+              "ref": "${{ github.ref }}",
+              "sha": "${{ github.sha }}"
+            }
